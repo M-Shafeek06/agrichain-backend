@@ -1,0 +1,31 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.13.2",
+    "bcryptjs": "^3.0.3",
+    "body-parser": "^2.2.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.1",
+    "ethers": "^6.16.0",
+    "express": "^4.22.1",
+    "haversine-distance": "^1.2.4",
+    "ipfs-http-client": "^56.0.3",
+    "jsonwebtoken": "^9.0.3",
+    "ml-logistic-regression": "^2.0.0",
+    "ml-matrix": "^6.12.1",
+    "mongoose": "^9.0.2",
+    "node-geocoder": "^4.4.1",
+    "pdfkit": "^0.17.2",
+    "qrcode": "^1.5.4",
+    "uuid": "^13.0.0"
+  }
+}
