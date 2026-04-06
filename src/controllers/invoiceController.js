@@ -115,10 +115,7 @@ exports.downloadInvoice = async (req, res) => {
         const doc = new PDFDocument({ margin: 35, size: "A4" });
         /* ================= WATERMARK LOGO ================= */
 
-        const logoPath = path.join(
-            __dirname,
-            "../../../frontend/src/assets/AgriChainTrust1.png"
-        );
+        const logoPath = path.join(__dirname, "../assets/AgriChainTrust1.png");
 
         // A4 dimensions
         const pageWidth = doc.page.width;
@@ -421,10 +418,7 @@ exports.downloadInvoice = async (req, res) => {
         const blockX = doc.page.width - blockWidth - 45;
 
         // Tick image path
-        const tickPath = path.join(
-            __dirname,
-            "../../../frontend/src/assets/greentick.png"
-        );
+        const tickPath = path.join(__dirname, "../assets/greentick.png");
 
         // Reduced tick size
         const tickSize = 95;
