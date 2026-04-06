@@ -109,7 +109,7 @@ exports.downloadInvoice = async (req, res) => {
         const invoiceId = `INV-${Date.now()}`;
         const fileName = `${invoiceId}.pdf`;
 
-        res.setHeader("Content-Disposition", `attachment; filename="${fileName}"`);
+        res.setHeader("Content-Disposition", `inline; filename="${fileName}"`);
         res.setHeader("Content-Type", "application/pdf");
 
         const doc = new PDFDocument({ margin: 35, size: "A4" });
