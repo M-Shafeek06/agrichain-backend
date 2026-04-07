@@ -59,6 +59,8 @@ exports.storeHashOnBlockchain = async (batchId, hash) => {
     const tx = await contract.storeBatchHash(batchId, formattedHash);
     const receipt = await tx.wait();
 
+    console.log("TX HASH:", receipt.hash);
+
     await GasLog.create({
       batchId,
       txHash: receipt.hash,

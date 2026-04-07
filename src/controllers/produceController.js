@@ -119,7 +119,15 @@ exports.createProduceBatch = async (req, res) => {
 
     /* ================= BLOCKCHAIN ================= */
 
-    await storeHashOnBlockchain(batchId, genesisHash);
+    console.log("🔥 ENTERED BLOCKCHAIN SECTION");
+
+    try {
+      console.log("🚀 Sending to blockchain...");
+      await storeHashOnBlockchain(batchId, genesisHash);
+      console.log("✅ Blockchain success");
+    } catch (err) {
+      console.error("❌ Blockchain failed:", err.message);
+    }
 
     const qrCode = await generateBatchQR(batchId);
 
@@ -514,11 +522,17 @@ exports.approveProduce = async (req, res) => {
       console.warn("Blockchain check failed, skipping store");
     }
 
-    await storeAdminVerificationOnBlockchain(
-      produce.batchId,
-      "ADMIN",
-      adminRemark
-    );
+    try {
+      console.log("🚀 Storing admin verification...");
+      await storeAdminVerificationOnBlockchain(
+        produce.batchId,
+        "ADMIN",
+        adminRemark
+      );
+      console.log("✅ Admin verification stored");
+    } catch (err) {
+      console.error("❌ Admin blockchain failed:", err.message);
+    }
     /* ================= TRUST UPDATE ================= */
 
     await updateTrustScore({
