@@ -129,7 +129,7 @@ exports.downloadCertificate = async (req, res) => {
 
     const doc = new PDFDocument({ size: "A4", margin: 40 });
 
-    const logoPath = path.join(__dirname, "../assets/AgriChainTrust1.png");
+    const logoPath = path.join(__dirname, "../../assets/AgriChainTrust1.png");
     const drawWatermark = () => {
       const centerX = doc.page.width / 2 - 150;
       const centerY = doc.page.height / 2 - 150;
@@ -1050,7 +1050,7 @@ exports.downloadCertificate = async (req, res) => {
     /* ================= AUTHORIZATION ================= */
     const authY = doc.y;
     doc.image(
-      path.join(__dirname, "../assets/greentick.png"),
+      path.join(__dirname, "../../assets/greentick.png"),
       doc.page.width - 210,
       authY + 2,
       { width: 14 }
