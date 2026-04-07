@@ -232,10 +232,7 @@ async function downloadDistributorInvoice(req, res) {
 
         const path = require("path");
 
-        const logoPath = path.join(
-            __dirname,
-            "../../../frontend/src/assets/AgriChainTrust1.png"
-        );
+        const logoPath = path.resolve(__dirname, "../../assets/AgriChainTrust1.png");
 
         doc.save();
         doc.opacity(0.30);
@@ -526,10 +523,7 @@ async function downloadDistributorInvoice(req, res) {
 
         /* ================= SIGNATURE ================= */
 
-        const tickPath = path.join(
-            __dirname,
-            "../../../frontend/src/assets/greentick.png"
-        );
+        const tickPath = path.resolve(__dirname, "../../assets/greentick.png");
 
         const signY = doc.y;
         const blockWidth = 180;

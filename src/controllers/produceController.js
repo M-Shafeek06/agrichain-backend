@@ -839,10 +839,7 @@ exports.downloadTransporterInvoice = async (req, res) => {
 
     /* ================= WATERMARK ================= */
 
-    const logoPath = path.join(
-      __dirname,
-      "../../../frontend/src/assets/AgriChainTrust1.png"
-    );
+    const logoPath = path.resolve(__dirname, "../../assets/AgriChainTrust1.png");
 
     const logoWidth = 420;
 
@@ -1127,10 +1124,7 @@ exports.downloadTransporterInvoice = async (req, res) => {
 
     /* ================= DIGITAL SIGNATURE ================= */
 
-    const tickPath = path.join(
-      __dirname,
-      "../../../frontend/src/assets/greentick.png"
-    );
+    const tickPath = path.resolve(__dirname, "../../assets/greentick.png");
 
     const signWidth = 220;
     const signX = contentRight - signWidth;
