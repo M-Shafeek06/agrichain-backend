@@ -16,12 +16,16 @@ async function recalculateTrust() {
 
         for (const trust of all) {
 
+            /* 🔥 REBUILD COUNTERS FROM HISTORY (CRITICAL) */
+            trust.totalBlocks = trust.history.length;
+            trust.validBlocks = trust.history.filter(h => h.delta === 1).length;
+
             const successRate =
                 trust.totalBlocks > 0
                     ? trust.validBlocks / trust.totalBlocks
                     : 0;
 
-            const experienceWeight = Math.min(trust.totalBlocks / 10, 1);
+            const experienceWeight = Math.min(trust.totalBlocks / 20, 1);
 
             let trustScore =
                 successRate * 100 * (0.5 + 0.5 * experienceWeight);

@@ -50,24 +50,31 @@ module.exports = async function updateTrustScore({
             trust.entityName = correctName;
         }
 
-        /* 🚫 DUPLICATE EVENT GUARD (CRITICAL FIX) */
+        /* 🚫 DUPLICATE EVENT GUARD */
         const alreadyLogged = trust.history.some(
-            h => h.batchId === batchId && h.delta === (isValid ? 1 : -1)
+            h => h.batchId === batchId
         );
 
         if (alreadyLogged) {
-            return; // 🔥 STOP SPAM
-        }
-
-        /* 🔥 STEP 4: UPDATE COUNTERS */
-        trust.totalBlocks += 1;
-
-        if (isValid === true) {
-            trust.validBlocks += 1;
+            return;
         }
 
         /* =====================================================
-           🔥 STEP 5: NEW TRUST FORMULA (FINAL FIX)
+           🔥 STEP 4: HISTORY FIRST
+        ===================================================== */
+        trust.history.push({
+            delta: isValid ? +1 : -1,
+            reason,
+            batchId,
+            at: new Date()
+        });
+
+        /* 🔥 RECOMPUTE COUNTERS */
+        trust.totalBlocks = trust.history.length;
+        trust.validBlocks = trust.history.filter(h => h.delta === 1).length;
+
+        /* =====================================================
+           🔥 STEP 5: TRUST CALCULATION (NOW CORRECT)
         ===================================================== */
 
         const successRate =
@@ -75,13 +82,12 @@ module.exports = async function updateTrustScore({
                 ? trust.validBlocks / trust.totalBlocks
                 : 0;
 
-        // Experience factor (more blocks = more trust weight)
         const experienceWeight = Math.min(trust.totalBlocks / 20, 1);
 
         let trustScore =
             successRate * 100 * (0.5 + 0.5 * experienceWeight);
 
-        /* 🔥 ROLE-BASED WEIGHTING */
+        /* 🔥 ROLE WEIGHT */
         let roleWeight = 1;
 
         if (correctRole === "DISTRIBUTOR") roleWeight = 1.1;
@@ -89,21 +95,13 @@ module.exports = async function updateTrustScore({
         else if (correctRole === "RETAILER") roleWeight = 0.95;
         else if (correctRole === "FARMER") roleWeight = 0.9;
 
-        trustScore = trustScore * roleWeight;
+        trustScore *= roleWeight;
 
-        /* 🔒 CLAMP 0–100 */
+        /* 🔒 CLAMP */
         trust.trustScore = Math.max(
             0,
             Math.min(100, Math.round(trustScore))
         );
-
-        /* 🔥 STEP 6: HISTORY */
-        trust.history.push({
-            delta: isValid ? +1 : -1,
-            reason,
-            batchId,
-            at: new Date()
-        });
 
         await trust.save();
 
