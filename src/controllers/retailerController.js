@@ -5,6 +5,7 @@ const { verifyAndUpdateInventoryIntegrity } = require("../services/saleIntegrity
 const { money, mul, add, sub } = require("../utils/money");
 const { generateSaleHash } = require("../services/saleIntegrityService");
 const SaleLog = require("../models/SaleLog");
+const updateTrustScore = require("../utils/updateTrustScore");
 
 exports.getRetailers = async (req, res) => {
     try {
@@ -171,6 +172,7 @@ exports.sellProduce = async (req, res) => {
 
         const { inventoryId } = req.params;
         const quantity = Number(req.body.quantity);
+
         const retailerId =
             req.headers["x-retailer-id"] ||
             req.headers["x-role-id"];
@@ -181,33 +183,59 @@ exports.sellProduce = async (req, res) => {
             });
         }
 
-        /* ================= ATOMIC UPDATE ================= */
+        /* ================= FETCH INVENTORY ================= */
 
         const inventory = await RetailerInventory.findOne({
             inventoryId,
-            retailerId,
-            remainingQuantity: { $gte: quantity },
-            integrityStatus: { $ne: "TAMPERED" }
+            retailerId
         });
 
         if (!inventory) {
+            return res.status(404).json({
+                message: "Inventory not found"
+            });
+        }
+
+        // 🔥 TAMPER CHECK (BEST POSITION)
+        if (inventory.integrityStatus === "TAMPERED") {
+            await updateTrustScore({
+                role: "RETAILER",
+                roleId: retailerId,
+                isValid: false,
+                batchId: inventory.batchId,
+                reason: "Attempted sale of tampered inventory"
+            });
+
+            return res.status(400).json({
+                message: "Cannot sell tampered inventory"
+            });
+        }
+
+        // 🔥 STOCK CHECK
+        if (inventory.remainingQuantity < quantity) {
+            await updateTrustScore({
+                role: "RETAILER",
+                roleId: retailerId,
+                isValid: false,
+                batchId: inventory.batchId,
+                reason: "Invalid sale attempt or insufficient stock"
+            });
+
             return res.status(400).json({
                 message: "Not enough stock available"
             });
         }
 
-        // 🔹 ROUND FUNCTION
+        /* ================= UPDATE STOCK ================= */
+
         const round = (num) => Math.round(num * 100) / 100;
 
-        // 🔹 SAFE CALCULATION
         inventory.soldQuantity = round(inventory.soldQuantity + quantity);
         inventory.remainingQuantity = round(
             inventory.quantity - inventory.soldQuantity
         );
 
         const updatedInventory = await inventory.save();
-
-        /* ================= STATUS UPDATE ================= */
 
         if (updatedInventory.remainingQuantity <= 0) {
             updatedInventory.status = "sold_out";
@@ -260,6 +288,17 @@ exports.sellProduce = async (req, res) => {
             saleHash
         });
 
+        /* ================= TRUST UPDATE (SUCCESS) ================= */
+
+        await updateTrustScore({
+            role: "RETAILER",
+            roleId: retailerId,
+            entityName: null,
+            isValid: true,
+            batchId: updatedInventory.batchId,
+            reason: "Retail inventory sale recorded"
+        });
+
         /* ================= RESPONSE ================= */
 
         return res.json({
@@ -275,7 +314,26 @@ exports.sellProduce = async (req, res) => {
     } catch (err) {
         console.error("❌ SELL PRODUCE ERROR:", err);
 
-        res.status(500).json({
+        /* ================= TRUST PENALTY (FAIL SAFE) ================= */
+
+        try {
+            const retailerId =
+                req.headers["x-retailer-id"] ||
+                req.headers["x-role-id"];
+
+            await updateTrustScore({
+                role: "RETAILER",
+                roleId: retailerId,
+                isValid: false,
+                batchId: req.params.inventoryId,
+                reason: "Unexpected error during sale"
+            });
+
+        } catch (e) {
+            console.warn("Trust update failed (safe fallback)");
+        }
+
+        return res.status(500).json({
             message: "Retail sale failed"
         });
     }

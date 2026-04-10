@@ -287,7 +287,8 @@ exports.verifyProduce = async (req, res) => {
       harvestDate: produce.harvestDate
         ? new Date(produce.harvestDate).toISOString()
         : "",
-      basePrice: produce.basePrice || 0
+      basePrice: produce.basePrice || 0,
+      distributorAcceptedBasePrice: produce.distributorAcceptedBasePrice || 0
     };
 
     /* ================= HASH COMPUTATION ================= */
@@ -492,10 +493,11 @@ exports.approveProduce = async (req, res) => {
       farmerName: produce.farmerName,
       cropName: produce.cropName,
       quantity: produce.quantity,
-      totalQuantity: produce.totalQuantity || produce.quantity,
+      totalQuantity: produce.totalQuantity,
       qualityGrade: produce.qualityGrade,
       harvestDate: new Date(produce.harvestDate).toISOString(),
-      basePrice: produce.basePrice
+      basePrice: produce.basePrice,
+      distributorAcceptedBasePrice: produce.distributorAcceptedBasePrice || 0,
     };
 
     const genesisHash = generateBlockHash(snapshot);
