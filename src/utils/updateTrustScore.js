@@ -84,10 +84,10 @@ module.exports = async function updateTrustScore({
         /* 🔥 ROLE-BASED WEIGHTING */
         let roleWeight = 1;
 
-        if (correctRole === "DISTRIBUTOR") roleWeight = 1.2;
+        if (correctRole === "DISTRIBUTOR") roleWeight = 1.1;
         else if (correctRole === "TRANSPORTER") roleWeight = 1.0;
-        else if (correctRole === "RETAILER") roleWeight = 0.9;
-        else if (correctRole === "FARMER") roleWeight = 0.8;
+        else if (correctRole === "RETAILER") roleWeight = 0.95;
+        else if (correctRole === "FARMER") roleWeight = 0.9;
 
         trustScore = trustScore * roleWeight;
 

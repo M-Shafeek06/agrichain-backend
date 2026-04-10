@@ -29,10 +29,10 @@ async function recalculateTrust() {
             /* 🔥 ROLE WEIGHT */
             let roleWeight = 1;
 
-            if (trust.role === "DISTRIBUTOR") roleWeight = 1.2;
+            if (trust.role === "DISTRIBUTOR") roleWeight = 1.1;
             else if (trust.role === "TRANSPORTER") roleWeight = 1.0;
-            else if (trust.role === "RETAILER") roleWeight = 0.9;
-            else if (trust.role === "FARMER") roleWeight = 0.8;
+            else if (trust.role === "RETAILER") roleWeight = 0.95;
+            else if (trust.role === "FARMER") roleWeight = 0.9;
 
             trustScore = trustScore * roleWeight;
 
