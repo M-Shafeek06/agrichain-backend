@@ -8,6 +8,8 @@ const Profile = require("../models/Profile");
 const RetailerInventory = require("../models/RetailerInventory");
 const RoleIdentity = require("../models/RoleIdentity");
 const Shipment = require("../models/Shipment");
+const BASE_URL = process.env.FRONTEND_URL;
+
 
 exports.downloadCertificate = async (req, res) => {
   try {
@@ -111,9 +113,11 @@ exports.downloadCertificate = async (req, res) => {
       (sum, s) => sum + (s.distance || 0),
       0
     );
+
     const verifyURL = isAllocationCertificate
-      ? `http://localhost:5173/verify/${allocationData.inventoryId}`
-      : `http://localhost:5173/verify/${batchId}`;
+      ? `${BASE_URL}/verify/${allocationData.inventoryId}`
+      : `${BASE_URL}/verify/${batchId}`;
+
     const qrImage = await QRCode.toDataURL(verifyURL);
 
     const certificateId = `ACT-CERT-${new Date().getFullYear()}-${crypto

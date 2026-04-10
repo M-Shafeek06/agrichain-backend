@@ -255,7 +255,8 @@ module.exports = async function generateCertificate(data) {
   drawTable(tableHeaders, tableRows, [30, 80, 100, 100, 110, 135]);
 
   /* ================= QR CODE ================= */
-  const verifyUrl = `http://localhost:5173/produce/view/${data.batchId}`;
+  const BASE_URL = process.env.FRONTEND_URL;
+  const verifyUrl = `${BASE_URL}/produce/view/${data.batchId}`;
   const qrData = await QRCode.toDataURL(verifyUrl);
   const qrImage = await pdfDoc.embedPng(qrData);
 
