@@ -645,10 +645,6 @@ async function verifyBatch(batchId) {
     }
   }
 
-  /* -----------------------------------------
-     AI Risk Calculation (FINAL TUNED VERSION)
-  ----------------------------------------- */
-
   let aiTamperProbability = mlResult.probability || 0;
 
   // HARD EVIDENCE
@@ -683,7 +679,13 @@ async function verifyBatch(batchId) {
     aiTamperProbability *= 1.1;
   }
 
-  // 🔥 BASELINE (VERY IMPORTANT)
+  // 🔥 NEW: ACTIVITY FACTOR (ADD THIS)
+  if (integrityStatus === "AUTHENTIC") {
+    const activityFactor = Math.min(shipmentCount * 1.2, 15);
+    aiTamperProbability += activityFactor;
+  }
+
+  // 🔥 BASELINE
   if (integrityStatus === "AUTHENTIC" && aiTamperProbability < 20) {
     aiTamperProbability += 2;
   }
