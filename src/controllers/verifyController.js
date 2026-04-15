@@ -651,69 +651,48 @@ async function verifyBatch(batchId) {
 
   let aiTamperProbability = mlResult.probability || 0;
 
-  /* =====================================================
-     🔥 HYBRID AI + BLOCKCHAIN CORRECTION (FINAL)
-  ===================================================== */
-
-  // ✅ 1. HARD EVIDENCE → FORCE HIGH (NO CHANGE)
+  // HARD EVIDENCE
   if (integrityStatus === "TAMPERED" || hasHardEvidence) {
     aiTamperProbability = 95;
   }
 
-  /* =====================================================
-     ✅ 2. BLOCKCHAIN VERIFIED → STRONG REDUCTION
-  ===================================================== */
+  // CLEAN BLOCKCHAIN REDUCTION
   else if (
     integrityStatus === "AUTHENTIC" &&
     !hashMismatch &&
     invalidBlocks === 0 &&
     !geoAnomaly
   ) {
-    // 🔥 Reduce but keep realistic floor
-    aiTamperProbability = aiTamperProbability * 0.3;
+    aiTamperProbability *= 0.6;
   }
 
-  /* =====================================================
-     ✅ 3. CLEAN SYSTEM BOOST (CONTROLLED REDUCTION)
-  ===================================================== */
+  // CLEAN SYSTEM BOOST
   if (
     integrityStatus === "AUTHENTIC" &&
     snapshotTamperedDetails.length === 0 &&
     !economicTampering &&
-    aiTamperProbability > 20   // 🔥 prevents over-reduction
+    aiTamperProbability > 20
   ) {
-    aiTamperProbability *= 0.6;
+    aiTamperProbability *= 0.5;
   }
 
-  /* =====================================================
-     ✅ 4. TRUST-BASED ADJUSTMENT (BALANCED)
-  ===================================================== */
+  // TRUST ADJUSTMENT
   if (avgTrust > 80) {
-    aiTamperProbability *= 0.85; // slight reduction
+    aiTamperProbability *= 0.85;
   } else if (avgTrust < 40) {
-    aiTamperProbability *= 1.1;  // slight increase
+    aiTamperProbability *= 1.1;
   }
 
-  /* =====================================================
-     ✅ 5. MINIMUM BASELINE (VERY IMPORTANT)
-  ===================================================== */
-  if (
-    integrityStatus === "AUTHENTIC" &&
-    aiTamperProbability < 10
-  ) {
-    aiTamperProbability = 10;   // 🔥 prevents unrealistic 0%
+  // 🔥 BASELINE (VERY IMPORTANT)
+  if (integrityStatus === "AUTHENTIC" && aiTamperProbability < 20) {
+    aiTamperProbability += 2;
   }
 
-  /* =====================================================
-     ✅ 6. FINAL CLAMP
-  ===================================================== */
-  aiTamperProbability = Math.max(10, Math.min(aiTamperProbability, 100));
+  // FINAL CLAMP
+  aiTamperProbability = Math.max(2, Math.min(aiTamperProbability, 100));
 
-  /* =====================================================
-     ✅ ROUNDING
-  ===================================================== */
+  // ROUND
   aiTamperProbability = Number(aiTamperProbability.toFixed(2));
-
 
   const fs = require("fs");
   const path = require("path");
