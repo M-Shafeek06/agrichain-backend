@@ -76,34 +76,90 @@ exports.getRetailerAdvancedStats = async (req, res) => {
         }
 
         /* =======================================================
-           3️⃣ DAILY SALES TREND (OUTSIDE LOOP)
-        ======================================================= */
+   3️⃣ DAILY SALES TREND + TODAY SALES
+======================================================= */
 
-        const last7Days = new Date();
-        last7Days.setDate(last7Days.getDate() - 7);
+// IST SAFE DATE RANGE
+const now = new Date();
 
-        const dailySalesAgg = await RetailerInventory.aggregate([
-            { $match: { retailerId } },
-            {
-                $group: {
-                    _id: {
-                        $dateToString: {
-                            format: "%Y-%m-%d",
-                            date: "$updatedAt"
-                        }
-                    },
-                    totalSold: { $sum: "$soldQuantity" }
+const startOfDay = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    0, 0, 0, 0
+);
+
+const endOfDay = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    23, 59, 59, 999
+);
+
+// LAST 7 DAYS
+const last7Days = new Date();
+last7Days.setDate(last7Days.getDate() - 7);
+
+/* =======================================================
+   DAILY SALES TREND
+======================================================= */
+
+const dailySalesAgg = await RetailerInventory.aggregate([
+    {
+        $match: {
+            retailerId,
+            updatedAt: { $gte: last7Days }
+        }
+    },
+    {
+        $group: {
+            _id: {
+                $dateToString: {
+                    format: "%Y-%m-%d",
+                    date: "$updatedAt"
                 }
             },
-            { $sort: { _id: 1 } }
-        ]);
+            totalSold: {
+                $sum: "$soldQuantity"
+            }
+        }
+    },
+    { $sort: { _id: 1 } }
+]);
 
-        const dailySales = dailySalesAgg
-            .filter(d => new Date(d._id) >= last7Days)
-            .map(d => ({
-                date: d._id,
-                count: d.totalSold
-            }));
+const dailySales = dailySalesAgg.map(d => ({
+    date: d._id,
+    count: d.totalSold
+}));
+
+/* =======================================================
+   TODAY SOLD CALCULATION
+======================================================= */
+
+const todaySalesAgg = await RetailerInventory.aggregate([
+    {
+        $match: {
+            retailerId,
+            updatedAt: {
+                $gte: startOfDay,
+                $lte: endOfDay
+            }
+        }
+    },
+    {
+        $group: {
+            _id: null,
+            todaySold: {
+                $sum: "$soldQuantity"
+            }
+        }
+    }
+]);
+
+const todaySold =
+    todaySalesAgg.length > 0
+        ? todaySalesAgg[0].todaySold
+        : 0;
 
         /* =======================================================
            4️⃣ TRUST SCORE
@@ -128,6 +184,7 @@ exports.getRetailerAdvancedStats = async (req, res) => {
             tampered,
             tamperedQuantity,
             sold: totalSoldQuantity,
+            todaySold,
             onStock: totalAvailableQuantity,
             dailySales,
             trustScore,
