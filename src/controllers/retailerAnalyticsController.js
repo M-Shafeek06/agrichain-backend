@@ -1,6 +1,7 @@
 const RetailerInventory = require("../models/RetailerInventory");
 const Shipment = require("../models/Shipment");
 const Produce = require("../models/Produce");
+const SaleLog = require("../models/SaleLog");
 
 /* ================= GET RETAILER ADVANCED STATS ================= */
 
@@ -27,9 +28,8 @@ exports.getRetailerAdvancedStats = async (req, res) => {
         let soldBatches = 0;
         let partiallySold = 0;
         let available = 0;
-
-        let totalSoldQuantity = 0;
         let totalAvailableQuantity = 0;
+
 
         /* ✅ LOOP ONLY FOR INVENTORY CALCULATION */
         for (const item of inventory) {
@@ -39,7 +39,6 @@ exports.getRetailerAdvancedStats = async (req, res) => {
             const integrity = item.integrityStatus;
 
             if (integrity === "AUTHENTIC") {
-                totalSoldQuantity += soldQty;
                 totalAvailableQuantity += remainingQty;
 
                 if (remainingQty === 0 && status === "sold_out") {
@@ -101,14 +100,15 @@ const last7Days = new Date();
 last7Days.setDate(last7Days.getDate() - 7);
 
 /* =======================================================
-   DAILY SALES TREND
+   SALES ANALYTICS FROM SALE LOGS
 ======================================================= */
 
-const dailySalesAgg = await RetailerInventory.aggregate([
+// DAILY SALES TREND
+const dailySalesAgg = await SaleLog.aggregate([
     {
         $match: {
             retailerId,
-            updatedAt: { $gte: last7Days }
+            createdAt: { $gte: last7Days }
         }
     },
     {
@@ -116,11 +116,11 @@ const dailySalesAgg = await RetailerInventory.aggregate([
             _id: {
                 $dateToString: {
                     format: "%Y-%m-%d",
-                    date: "$updatedAt"
+                    date: "$createdAt"
                 }
             },
             totalSold: {
-                $sum: "$soldQuantity"
+                $sum: "$quantitySold"
             }
         }
     },
@@ -129,18 +129,18 @@ const dailySalesAgg = await RetailerInventory.aggregate([
 
 const dailySales = dailySalesAgg.map(d => ({
     date: d._id,
-    count: d.totalSold
+    count: Number(d.totalSold.toFixed(2))
 }));
 
 /* =======================================================
-   TODAY SOLD CALCULATION
+   TODAY SOLD
 ======================================================= */
 
-const todaySalesAgg = await RetailerInventory.aggregate([
+const todaySalesAgg = await SaleLog.aggregate([
     {
         $match: {
             retailerId,
-            updatedAt: {
+            createdAt: {
                 $gte: startOfDay,
                 $lte: endOfDay
             }
@@ -150,7 +150,7 @@ const todaySalesAgg = await RetailerInventory.aggregate([
         $group: {
             _id: null,
             todaySold: {
-                $sum: "$soldQuantity"
+                $sum: "$quantitySold"
             }
         }
     }
@@ -158,7 +158,30 @@ const todaySalesAgg = await RetailerInventory.aggregate([
 
 const todaySold =
     todaySalesAgg.length > 0
-        ? todaySalesAgg[0].todaySold
+        ? Number(todaySalesAgg[0].todaySold.toFixed(2))
+        : 0;
+
+/* =======================================================
+   TOTAL SOLD
+======================================================= */
+
+const totalSalesAgg = await SaleLog.aggregate([
+    {
+        $match: { retailerId }
+    },
+    {
+        $group: {
+            _id: null,
+            totalSold: {
+                $sum: "$quantitySold"
+            }
+        }
+    }
+]);
+
+const totalSoldQuantity =
+    totalSalesAgg.length > 0
+        ? Number(totalSalesAgg[0].totalSold.toFixed(2))
         : 0;
 
         /* =======================================================
